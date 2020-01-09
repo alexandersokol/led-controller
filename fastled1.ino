@@ -20,11 +20,15 @@
 #define MODE_RAINBOW 3
 #define MODE_RAINBOW2 4
 #define MODE_RANDOM 5
+#define MODE_BULLET 6
+#define MODE_RAINBOW_DASH 7
+#define MODE_BULLET_2 8
 
-#define MODES_COUNT 5
+#define MODES_COUNT 9
 
 #define POT_COUNT 4
 #define HISTORY_SIZE 25
+#define RAINBOW_DASH_SIZE 3
 
 #include <FastLED.h>
 CRGB strip[LED_COUNT];
@@ -48,6 +52,13 @@ int modes[] = {MODE_WHITE, MODE_RAINBOW, MODE_RANDOM};
 
 unsigned long rainbowChangeTime = 0;
 int rainbow2Offeset = 0;
+int bulletPosition = 0;
+int bulletColor = 0;
+
+int rainbowDashPosition = 0;
+int rainbowDashColor = 0;
+
+boolean bullet2DirectionRight = true;
 
 void setup()
 { 
@@ -75,7 +86,82 @@ void loop()
     modeHSV();
   } else if(currentMode == MODE_RAINBOW2){
     modeRainbow2();
+  } else if(currentMode == MODE_BULLET){
+    modeBullet();
+  } else if(currentMode == MODE_RAINBOW_DASH){
+    modeRainbowDash();
+  } else if(currentMode == MODE_BULLET_2){
+    modeBullet2();
   }
+}
+
+void modeBullet2(){
+  if(bulletPosition == 0 || bulletPosition == LED_COUNT - 1){
+    bulletColor = random(0, 255);
+  }
+  
+  for (int i = 0; i < LED_COUNT; i++){
+      if(i == bulletPosition || i == bulletPosition - 1 || i == bulletPosition + 1 || i == bulletPosition - 2 || i == bulletPosition + 2 || i == bulletPosition - 1 || i == bulletPosition + 1 || i == bulletPosition - 3 || i == bulletPosition + 3){
+        strip[i].setHSV(bulletColor, 255, 255);
+      } else {
+        strip[i] = CRGB::Black;
+      }
+      strip[i].fadeLightBy(p[0]);
+  }
+  FastLED.show();
+
+  if(bullet2DirectionRight){
+    bulletPosition++;
+  } else {
+    bulletPosition--;
+  }
+  
+  if(bulletPosition == LED_COUNT){
+    bulletPosition = LED_COUNT - 1;
+    bullet2DirectionRight = false;
+  } else if(bulletPosition == -1){
+    bulletPosition = 0;
+    bullet2DirectionRight = true;
+  }
+
+  delay(10);
+}
+
+void modeRainbowDash(){
+   for (int i = 0; i < LED_COUNT; i++){
+      int hue = (i + offset) / RAINBOW_DASH_SIZE;
+      strip[i].setHSV(hue, 255, 200);
+      strip[i].fadeLightBy(p[0]);
+   }
+   
+   offset++;
+   if(offset == 10000){
+    offset = 0;
+  }
+  
+  FastLED.show();
+}
+
+void modeBullet(){
+  if(bulletPosition == 0){
+    bulletColor = random(0, 255);
+  }
+  
+  for (int i = 0; i < LED_COUNT; i++){
+      if(i == bulletPosition || i == bulletPosition - 1 || i == bulletPosition + 1){
+        strip[i].setHSV(bulletColor, 255, 255);
+      } else {
+        strip[i] = CRGB::Black;
+      }
+  }
+  FastLED.show();
+
+  bulletPosition++;
+  if(bulletPosition == LED_COUNT){
+    bulletPosition = 0;
+  }
+
+  delay((bulletPosition * 2) / 10);
 }
 
 void handleClick(){
